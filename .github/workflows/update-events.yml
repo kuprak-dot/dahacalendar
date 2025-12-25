@@ -23,6 +23,8 @@ jobs:
         run: npm install node-fetch cheerio
 
       - name: Run event scraper
+        env:
+          PREDICTHQ_API_KEY: ${{ secrets.PREDICTHQ_API_KEY }}
         run: node scripts/scrape-events.js
 
       - name: Check for changes
