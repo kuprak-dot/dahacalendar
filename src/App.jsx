@@ -7,6 +7,7 @@ import Navigation from './components/Navigation';
 import { useEvents } from './hooks/useEvents';
 import { useFavorites } from './hooks/useFavorites';
 import { useReminders } from './hooks/useReminders';
+import { useCustomSources } from './hooks/useCustomSources';
 import { getEventsForDate, filterEvents } from './utils/categories';
 import './index.css';
 
@@ -16,10 +17,14 @@ function App() {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [newSourceName, setNewSourceName] = useState('');
+  const [newSourceUrl, setNewSourceUrl] = useState('');
+  const [newSourceDesc, setNewSourceDesc] = useState('');
 
   const { events, allEvents, sources, loading } = useEvents();
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
   const { hasReminder, toggleReminder } = useReminders();
+  const { customSources, addSource, removeSource: removeCustomSource } = useCustomSources();
 
   // Filter events based on active filter and search
   const filteredEvents = useMemo(() => {
@@ -50,6 +55,20 @@ function App() {
   const handleReminderClick = async () => {
     if (selectedEvent) {
       await toggleReminder(selectedEvent);
+    }
+  };
+
+  const handleAddSource = (e) => {
+    e.preventDefault();
+    if (newSourceName && newSourceUrl) {
+      addSource({
+        name: newSourceName,
+        url: newSourceUrl,
+        description: newSourceDesc
+      });
+      setNewSourceName('');
+      setNewSourceUrl('');
+      setNewSourceDesc('');
     }
   };
 
@@ -226,10 +245,137 @@ function App() {
                   </a>
                 </div>
               ))}
+
+              {/* Custom Sources */}
+              {customSources.map((source) => (
+                <div key={source.id} style={{ marginBottom: '12px', position: 'relative' }}>
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="source-link"
+                    style={{
+                      display: 'block',
+                      padding: '16px',
+                      borderRadius: '12px',
+                      textDecoration: 'none',
+                      border: '1px solid var(--color-accent)'
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {source.name}
+                      <span style={{
+                        fontSize: '0.65rem',
+                        background: 'var(--color-accent)',
+                        padding: '2px 6px',
+                        borderRadius: '4px'
+                      }}>Custom</span>
+                    </div>
+                    <div style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      {source.description || source.url}
+                    </div>
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeCustomSource(source.id);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      right: '8px',
+                      background: 'var(--color-bg)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'var(--color-text-secondary)'
+                    }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add Custom Source Form */}
+            <div style={{
+              marginTop: '24px',
+              padding: '16px',
+              background: 'var(--color-bg-card)',
+              borderRadius: '12px',
+              border: '1px solid var(--color-border)'
+            }}>
+              <h3 style={{ fontSize: '1rem', marginBottom: '12px' }}>➕ Add Custom Source</h3>
+              <form onSubmit={handleAddSource}>
+                <input
+                  type="text"
+                  placeholder="Source name (e.g., Qatar Museums)"
+                  value={newSourceName}
+                  onChange={(e) => setNewSourceName(e.target.value)}
+                  className="search-input"
+                  style={{ marginBottom: '8px' }}
+                  required
+                />
+                <input
+                  type="url"
+                  placeholder="URL (e.g., https://qm.org.qa/events)"
+                  value={newSourceUrl}
+                  onChange={(e) => setNewSourceUrl(e.target.value)}
+                  className="search-input"
+                  style={{ marginBottom: '8px' }}
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Description (optional)"
+                  value={newSourceDesc}
+                  onChange={(e) => setNewSourceDesc(e.target.value)}
+                  className="search-input"
+                  style={{ marginBottom: '12px' }}
+                />
+                <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                  Add Source
+                </button>
+              </form>
+            </div>
+
+            {/* How Updates Work */}
+            <div style={{
+              marginTop: '24px',
+              padding: '16px',
+              background: 'var(--color-bg-glass)',
+              borderRadius: '12px',
+              fontSize: '0.85rem',
+              color: 'var(--color-text-secondary)'
+            }}>
+              <h3 style={{ color: 'var(--color-text)', fontSize: '0.95rem', marginBottom: '12px' }}>🔄 How Updates Work</h3>
+              <p style={{ marginBottom: '8px' }}>
+                <strong>Automatic:</strong> Events are stored in a data file. When the app is deployed,
+                it will show the latest events from that file.
+              </p>
+              <p style={{ marginBottom: '8px' }}>
+                <strong>To update events:</strong>
+              </p>
+              <ol style={{ paddingLeft: '20px', marginBottom: '12px' }}>
+                <li>Edit <code>src/data/events.json</code> on GitHub</li>
+                <li>Add new events with date, location, category</li>
+                <li>Commit changes → Vercel auto-deploys!</li>
+              </ol>
+              <p style={{ marginBottom: '8px' }}>
+                <strong>Your custom sources</strong> above are saved on your device and will always be available for quick access.
+              </p>
             </div>
 
             <div style={{
-              marginTop: '24px',
+              marginTop: '16px',
               padding: '16px',
               background: 'var(--color-bg-glass)',
               borderRadius: '12px',
