@@ -25,7 +25,7 @@ jobs:
       - name: Run event scraper
         env:
           PREDICTHQ_API_KEY: ${{ secrets.PREDICTHQ_API_KEY }}
-        run: node scripts/scrape-events.js
+        run: node scripts/scrape-events.cjs
 
       - name: Check for changes
         id: git-check
