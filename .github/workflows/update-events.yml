@@ -1,0 +1,40 @@
+name: Update Events
+
+on:
+  schedule:
+    # Runs every 48 hours (at 06:00 UTC on Mon, Wed, Fri, Sun)
+    - cron: '0 6 */2 * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update-events:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install node-fetch cheerio
+
+      - name: Run event scraper
+        run: node scripts/scrape-events.js
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code src/data/events.json || echo "changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changed
+        if: steps.git-check.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add src/data/events.json
+          git commit -m "Auto-update events [$(date +'%Y-%m-%d')]"
+          git push
